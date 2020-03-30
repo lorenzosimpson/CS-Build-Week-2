@@ -5,16 +5,16 @@ class Graph:
     """Represent a graph as a dictionary of vertices mapping labels to edges."""
     def __init__(self):
         self.vertices = {
-            0: {
-                "room_id": 0,
-                "title": "A Dark Room",
-                "description": "You cannot see anything.",
-                "coordinates": "(60,60)",
-                "exits": ["n", "s", "e", "w"],
-                "cooldown": 1.0,
-                "errors": [],
-                "messages": []
-                }
+            # 0: {
+            #     "room_id": 0,
+            #     "title": "A Dark Room",
+            #     "description": "You cannot see anything.",
+            #     "coordinates": "(60,60)",
+            #     "exits": ["n", "s", "e", "w"],
+            #     "cooldown": 1.0,
+            #     "errors": [],
+            #     "messages": []
+            #     }
             }
 
     def add_vertex(self, vertex_id):

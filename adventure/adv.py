@@ -6,6 +6,7 @@ from player import Player
 from room import Room
 import random
 import pickle
+import math
 
 
 starting_room = Room('A Dark Room', 'You cannot see anything.', 60, 60)
@@ -63,6 +64,7 @@ while len(room_graph.vertices) < 10:
             room_graph.vertices[room_id][1] = {}
             last_move = exits[random.randint(0, len(exits) - 1)]
             visited[room_id] = last_move
+            print('STARTING ROOM', room_id)
         except ValueError:
             print('Error: Non-json response')
             break
@@ -82,16 +84,23 @@ while len(room_graph.vertices) < 10:
             direction = exits[0]
         else:
             try:
-                direction = opposite_pairs[last_move][random.randint(0, 2)]
+                rand = random.randint(0, 1)
+                if opposite_pairs[last_move][rand] in exits:
+                    direction = opposite_pairs[last_move][rand]
+                else:
+                    if rand == 0:
+                        direction = opposite_pairs[last_move][1]
+                    else:
+                        direction = opposite_pairs[last_move][0]
+
             # direction = exits[random.randint(0, len(exits) - 1)]
             except:
                 direction = exits[random.randint(0, len(exits) - 1)]
         
+        if direction == opposite_pairs[last_move]:
+            backtrack = True
         
-        # direction = exits[-1]
-        
-
-        print(direction)
+        print(f'\n{direction}\n')
 
 
         obj  = { "direction": direction}
@@ -104,7 +113,7 @@ while len(room_graph.vertices) < 10:
         try:
             res = r.json()
             print(f'\n{res}\n')
-            cooldown=int(res['cooldown'])
+            cooldown=int(math.ceil(res['cooldown']))
             room_id = res['room_id']
             print(f'\nROOM {room_id}\n')
             exits = res['exits']

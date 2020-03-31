@@ -15,7 +15,7 @@ from util import Stack
 
 # print(result)
 
-starting_room = Room('A Dark Room', 'You cannot see anything.', 431, 60, 60)
+starting_room = Room('A Dark Room', 'You cannot see anything.', 432, 60, 60)
 player = Player(starting_room)
 
 with open('map.txt') as f:
@@ -57,3 +57,4 @@ convert_to_directions(room_list)
 
 print(room_list)
 print(traversal_path)
+print(len(visited))

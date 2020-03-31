@@ -12,28 +12,10 @@ starting_room = Room('A Dark Room', 'You cannot see anything.', 60, 60)
 player = Player(starting_room)
 
 
-traversal_path = [] # needs to be a list of directions
+# traversal_path = [] # needs to be a list of directions
 room_list = []
 
 
-visited = set()
-
-def dft_recursive(room_id):
-    room_list.append(room_id)
-    if room_id not in visited:
-        visited.add(room_id)
-
-        for k, v in room_graph.vertices[room_id]['exits']: # tuple w/ k, v pair
-            if v not in visited:
-                dft_recursive(v)
-                room_list.append(room_id)
-                print('YO', room_id)
-
-def convert_to_directions(rooms_list):
-    for i in range(0, len(rooms_list) - 1):
-        for direction, room_id in room_graph[rooms_list[i]][1].items():
-            if room_id == rooms_list[i + 1]:
-                traversal_path.append(direction)
 
 url = "https://lambda-treasure-hunt.herokuapp.com/api/adv/move/"
 init = "https://lambda-treasure-hunt.herokuapp.com/api/adv/init/"
@@ -44,51 +26,101 @@ head = {
 
 cooldown = 0
 
-f = open('map.txt', 'w')
+f = open('./map.txt', 'w')
 
-while len(room_graph.vertices) < 2:
+opposite_dir = {
+    'n': 's',
+    's': 'n',
+    'w': 'e',
+    'e': 'w'
+}
+
+opposite_pairs = {
+    'n': ['e', 'w'],
+    's': ['e', 'w'],
+    'e': ['n', 's'],
+    'w': ['n', 's']
+}
+
+visited = {}
+last_move = None
+
+while len(room_graph.vertices) < 10:
     print('len of arr', len(room_list))
     print('len graph', len(room_graph.vertices))
+    print('vistied', visited)
+    backtrack = False
     if len(room_list) < 1:
         r = requests.get(url=init, headers=head)
         try:
             res = r.json()
             cooldown = int(res['cooldown'])
             room_id = res['room_id']
-            # f.write("%s\n" % res)
-            # f.write("%s\n" % room_id: {res})
-            room_graph.vertices[room_id] = res
+            exits = res['exits']
             room_list.append(room_id)
+            room_graph.vertices[room_id] = [None, None]
+            room_graph.vertices[room_id][0] = res
+            room_graph.vertices[room_id][1] = {}
+            last_move = exits[random.randint(0, len(exits) - 1)]
+            visited[room_id] = last_move
         except ValueError:
             print('Error: Non-json response')
             break
 
     else:
+        print(last_move, 'last_move')
         sleep(cooldown)
-        exits = room_graph.vertices[room_list[-1]]['exits']
-        direction = exits[random.randint(0, len(exits) - 1)] # choose random direction
+        last_room = room_list[-1]
+        exits = room_graph.vertices[room_list[-1]][0]['exits']
+        print(exits, 'exits')
+
+        if last_move in exits: # try to keep going the same way
+            direction = last_move
+        elif len(exits) == 1:
+            # send the next room as a param
+            backtrack = True
+            direction = exits[0]
+        else:
+            try:
+                direction = opposite_pairs[last_move][random.randint(0, 2)]
+            # direction = exits[random.randint(0, len(exits) - 1)]
+            except:
+                direction = exits[random.randint(0, len(exits) - 1)]
+        
+        
+        # direction = exits[-1]
+        
+
         print(direction)
+
+
         obj  = { "direction": direction}
-        # r = requests.post(url, data = obj, headers = head)
-        r = requests.post(url=url, data=json.dumps(obj), headers=head)
-        print(r)
+        if backtrack is False:
+            r = requests.post(url=url, data=json.dumps(obj), headers=head)
+        else:
+            obj_back = { 'direction': direction, 'next_room_id': str(room_list[-2])}
+            r = requests.post(url=url, data=json.dumps(obj_back), headers=head)
+        print('BACKTRACK', backtrack)
         try:
             res = r.json()
+            print(f'\n{res}\n')
             cooldown=int(res['cooldown'])
             room_id = res['room_id']
-            room_graph.vertices[room_id] = res
+            print(f'\nROOM {room_id}\n')
+            exits = res['exits']
+            room_graph.vertices[room_id] = [None, None]
+            room_graph.vertices[room_id][0] = res
+            room_graph.vertices[room_id][1] = {}
+            room_graph.vertices[room_id][1][opposite_dir[direction]] = room_list[-1]
+            room_graph.vertices[room_list[-1]][1][opposite_dir[direction]] = room_id
             room_list.append(room_id)
-            # f.write("%s\n" % room_id: res)
-            # f.write(json.dumps({room_id: res}))
+            visited[room_id] = direction
             print('rooms list', room_list)
-            print(res)
+        except KeyError:
+            cooldown=int(math.ceil(res['cooldown']))
         except ValueError:
             print('Error: non-json response')
             break
 
 f.write(json.dumps(room_graph.vertices))
-# with open('map.txt', 'w') as f:
-#    for line in room_graph.vertices:
-#        f.write(json.dumps(line))
 
-# f.close()

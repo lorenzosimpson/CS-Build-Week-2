@@ -67,7 +67,7 @@ try:
     current_room = room_id
 
 
-    visited[room_id] = []
+    visited[room_id] = set()
 
     print('STARTING ROOM', room_id)
 except ValueError:
@@ -80,12 +80,13 @@ sleep(cooldown)
 # while for all other rooms
 
 
-while len(room_graph.vertices) < 499:
+while len(room_graph.vertices) < 500:
     print('-----')
+    print(current_room)
     sleep(cooldown)
     print(room_list)
-    print(visited)
-    print('TOTAL MOVES', len(room_list)- 1)
+    print(visited[current_room])
+    print('TOTAL MOVES', len(room_list))
     print('UNIQUE ROOMS', len(room_graph.vertices))
     backtrack = False
 
@@ -93,39 +94,28 @@ while len(room_graph.vertices) < 499:
     if current_room in visited.keys():
         visited_directions = visited[current_room]
     else:
-        visited_directions = []
+        visited_directions = set()
     # load the previous room's exits, and get ready to exit
     exits = room_graph.vertices[current_room][0]['exits']
 
     print(f'EXITS: {exits}')
 
 
-    # try to pick a random direction NOT in the visited 
-    # gen random direction
-        # if not in the visited directions, use that as direction
+
     dirs = ['n', 's', 'e', 'w']
     try:
         i = 3
-        while dirs[i] not in exits or dirs[i] in visited_directions:
+        while dirs[i] not in exits or opposite_dir[dirs[i]] in visited_directions:
             i -= 1
         direction = dirs[i]
 
-    except IndexError:
+    except:
         if len(exits) == 1:
             direction = exits[0]
-        else:
-            direction = exits[random.randint(0, len(exits) - 1)]
 
-        # if it is, generate a new one
-        # if all directions have been visited, keep a random one 
-    
-   
 
-    print(f'\n GUESS DIRECTION: {direction}')
 
-   
-
-    visited_directions.append(direction)
+    visited_directions.add(direction)
 
     if len(room_list) == 1:
         last_move = direction
@@ -146,10 +136,8 @@ while len(room_graph.vertices) < 499:
 
     try:
         res = r.json()
-        print(f'\n{res}\n')
         cooldown=int(math.ceil(res['cooldown']))
         room_id = res['room_id']
-        print(f'\nROOM {room_id}\n')
         exits = res['exits']
         room_graph.vertices[room_id] = [None, None]
         room_graph.vertices[room_id][0] = res
@@ -159,7 +147,7 @@ while len(room_graph.vertices) < 499:
         room_list.append(room_id)
         last_move = direction
         if room_id not in visited.keys():
-            visited[room_id] = []
+            visited[room_id] = set()
     except KeyError:
         cooldown=int(math.ceil(res['cooldown']))
     except ValueError:
